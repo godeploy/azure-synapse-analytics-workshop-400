@@ -1,3 +1,7 @@
+param($gdResourceGroupName)
+
+Write-Host $gdResourceGroupName
+
 $InformationPreference = "Continue"
 
 $IsCloudLabs = Test-Path C:\LabFiles\AzureCreds.ps1;
@@ -60,7 +64,11 @@ if($IsCloudLabs){
                 Select-AzSubscription -SubscriptionName $selectedSubName
         }
 
-        $resourceGroupName = Read-Host "Enter the resource group name";
+        if ($null -eq $gdResourceGroupName) {
+                $resourceGroupName = Read-Host "Enter the resource group name";
+        } else {
+                $resourceGroupName = $gdResourceGroupName
+        }
         
         $userName = ((az ad signed-in-user show) | ConvertFrom-JSON).UserPrincipalName
         
@@ -168,20 +176,8 @@ Ensure-ValidTokens
 
 if ([System.Environment]::OSVersion.Platform -eq "Unix")
 {
-        $azCopyLink = Check-HttpRedirect "https://aka.ms/downloadazcopy-v10-linux"
-
-        if (!$azCopyLink)
-        {
-                $azCopyLink = "https://azcopyvnext.azureedge.net/release20200709/azcopy_linux_amd64_10.5.0.tar.gz"
-        }
-
-        Invoke-WebRequest $azCopyLink -OutFile "azCopy.tar.gz"
-        tar -xf "azCopy.tar.gz"
-        $azCopyCommand = (Get-ChildItem -Path ".\" -Recurse azcopy).Directory.FullName
-        cd $azCopyCommand
-        chmod +x azcopy
-        cd ..
-        $azCopyCommand += "\azcopy"
+        bash -c 'curl -L https://aka.ms/downloadazcopy-v10-linux -o azcopyv10.tar && tar -xf azcopyv10.tar --strip-components=1 && mv azcopy /usr/local/bin/azcopy && rm azcopyv10.tar'
+        $azCopyCommand = "azcopy"
 }
 else
 {
@@ -591,7 +587,7 @@ $documentCount = Count-CosmosDbDocuments -SubscriptionId $subscriptionId -Resour
 
 Write-Information "Found $documentCount in Cosmos DB container $($cosmosDbContainer)"
 
-Install-Module -Name Az.CosmosDB
+Install-Module -Name Az.CosmosDB -Force
 
 if ($documentCount -ne 100000) 
 {
