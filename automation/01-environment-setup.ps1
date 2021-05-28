@@ -130,7 +130,7 @@ Assign-SynapseRole -WorkspaceName $workspaceName -RoleId "7af0c69a-a548-47d6-aea
 Assign-SynapseRole -WorkspaceName $workspaceName -RoleId "c3a6d2f1-a26f-4810-9b0f-591308d5cbf1" -PrincipalId $user.id  # Apache Spark Admin
 
 #Set the Azure AD Admin - otherwise it will bail later
-Set-SqlAdministrator $username $user.id;
+# Set-SqlAdministrator $username $user.id;
 
 #add the permission to the datalake to workspace
 $id = (Get-AzADServicePrincipal -DisplayName $workspacename).id
@@ -142,7 +142,7 @@ Set-AzKeyVaultAccessPolicy -ResourceGroupName $resourceGroupName -VaultName $key
 Set-AzKeyVaultAccessPolicy -ResourceGroupName $resourceGroupName -VaultName $keyVaultName -ObjectId $id -PermissionsToSecrets set,delete,get,list
 
 #remove need to ask for the password in script.
-$global:sqlPassword = $(Get-AzKeyVaultSecret -VaultName $keyVaultName -Name "SqlPassword").SecretValueText
+$global:sqlPassword = Get-AzKeyVaultSecret -VaultName $keyVaultName -Name "SqlPassword" -AsPlainText
 
 Write-Information "Create SQL-USER-ASA Key Vault Secret"
 $secretValue = ConvertTo-SecureString $sqlPassword -AsPlainText -Force
